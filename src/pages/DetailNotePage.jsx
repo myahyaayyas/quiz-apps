@@ -1,56 +1,72 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  getNote,
-  deleteNote,
-  getAllNotes,
-  archiveNote,
-  unarchiveNote,
-} from "../utils/local-data.js";
+import { deleteNote, getNote, archiveNote, unarchiveNote } from "../utils/network-data.js";
 import { showFormattedDate } from "../utils/index.js";
 import DeleteButton from "../components/DeleteButton.jsx";
 import ArsipButton from "../components/ArsipButton.jsx";
+import { LocaleConsumer } from "../contexts/LocaleContext.js";
 
 function DetailNotePage() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [note, setNote] = useState(null);
+  const [notes, setNotes] = useState(() => []);
 
-  const note = getNote(id);
+  useEffect(() => {
+    const fetchNote = async () => {
+      try {
+        const noteData = await getNote(id);
+        setNote(noteData.data);
+      } catch (error) {
+        console.error("Error fetching note:", error);
+      }
+    };
 
-  const [notes, setNotes] = useState(() => {
-    return getAllNotes();
-  });
+    fetchNote();
+  }, [id]);
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteNote(id);
+      setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
+      navigate("/");
+    } catch (error) {
+      console.error("Error deleting note:", error);
+    }
+  };
+
+  const handleToggleArchive = async (id, isArchived) => {
+    try {
+      if (isArchived) {
+        await unarchiveNote(id);
+      } else {
+        await archiveNote(id);
+      }
+
+      setNotes((prevNotes) =>
+        prevNotes.map((note) => (note.id === id ? { ...note, archived: !isArchived } : note))
+      );
+
+      navigate("/");
+    } catch (error) {
+      console.error("Error toggling archive:", error);
+    }
+  };
 
   if (!note) {
     return (
-      <div>
-        <h2>404</h2>
-        <p>Page not found</p>
-      </div>
+      <LocaleConsumer>
+        {({ locale }) => {
+          return (
+            <div>
+              <h2>404</h2>
+              <p>{locale === "id" ? "Halaman tidak ditemukan" : "Page not found"}</p>
+            </div>
+          );
+        }}
+      </LocaleConsumer>
     );
   }
-  const navigate = useNavigate();
-
-  const handleDelete = (id) => {
-    deleteNote(id);
-
-    setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
-
-    navigate("/");
-  };
-
-  const handleToggleArchive = (id, isArchived) => {
-    if (isArchived) {
-      unarchiveNote(id);
-    } else {
-      archiveNote(id);
-    }
-
-    setNotes((prevNotes) =>
-      prevNotes.map((note) => (note.id === id ? { ...note, archived: !isArchived } : note))
-    );
-
-    navigate("/");
-  };
 
   return (
     <div className="detail-page">

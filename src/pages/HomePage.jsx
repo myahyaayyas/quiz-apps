@@ -1,42 +1,23 @@
 import React from "react";
-import { useSearchParams } from "react-router-dom";
-import { getActiveNotes } from "../utils/network-data.js";
-import NoteList from "../components/NoteList.jsx";
-import NoteSearch from "../components/NoteSearch.jsx";
-import LocaleContext from "../contexts/LocaleContext.js";
+import { Link } from "react-router-dom";
 
-function HomePage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [notes, setNotes] = React.useState([]);
-  const [keyword, setKeyword] = React.useState(() => {
-    return searchParams.get("keyword") || "";
-  });
-  const { locale } = React.useContext(LocaleContext);
-
-  React.useEffect(() => {
-    getActiveNotes().then(({ data }) => {
-      setNotes(data);
-    });
-  }, []);
-
-  function onKeywordChangeHandler(keyword) {
-    setKeyword(keyword);
-    setSearchParams({ keyword });
-  }
-
-  const activeNotes = notes.filter((note) => !note.archived);
-
-  const notesToShow = keyword
-    ? activeNotes.filter((note) => note.title.toLowerCase().includes(keyword.toLowerCase()))
-    : activeNotes;
+const Home = () => {
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    window.location.href = "/login";
+  };
 
   return (
-    <div className="note-app__body">
-      <h2>{locale === "id" ? "Catatan Aktif" : "Active Notes"}</h2>
-      <NoteSearch keyword={keyword} keywordChange={onKeywordChangeHandler} />
-      <NoteList notes={notesToShow} />
+    <div className="home-container">
+      <h1 className="home-header">Welcome to the Quiz App</h1>
+      <button className="home-logout-button" onClick={handleLogout}>
+        Logout
+      </button>
+      <Link to="/quiz" className="home-start-quiz">
+        Start Quiz
+      </Link>
     </div>
   );
-}
+};
 
-export default HomePage;
+export default Home;

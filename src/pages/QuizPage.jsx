@@ -12,6 +12,7 @@ const QuizPage = () => {
       setQuestions(questionsData);
       setIsLoading(false);
     };
+
     loadQuestions();
   }, []);
 
